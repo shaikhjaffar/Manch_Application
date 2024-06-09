@@ -1,11 +1,12 @@
 // utils/auth.js
 import axios from 'axios';
+import { base_url } from './Constant';
 
-const API_URL = 'http://localhost:5000/api/auth'; // Replace with your API URL
+
 
 export const login = async (identifier, password) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, {
+    const response = await axios.post(`${base_url}/login`, {
         identifier,
       password,
     });

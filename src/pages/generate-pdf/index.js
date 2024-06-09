@@ -18,6 +18,7 @@ import Card from '@mui/material/Card'
 import { useState,useEffect } from 'react'
 import getFileName from 'src/@core/utils/getFileName'
 import { OutlinedInput } from '@mui/material'
+import { base_url } from 'src/@core/utils/Constant'
 
 
 const ImgStyled = styled('img')(({ theme }) => ({
@@ -131,7 +132,7 @@ const GeneratePdf = () => {
 
         // If token exists, make API request with Authorization header
         if (token) {
-          const response = await fetch('http://localhost:5000/api/getAllDocs', {
+          const response = await fetch(`${base_url}/getAllDocs`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
