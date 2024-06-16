@@ -32,6 +32,17 @@ const navigation = () => {
 
       // openInNewTab: true
     },
+    {
+      title: 'Download Pdf',
+      icon: Table,
+      path: '/download-pdf',
+
+      // openInNewTab: true
+    },
+    {
+      sectionTitle: 'E Court'
+    },
+
     
     // {
     //   title: 'Login',

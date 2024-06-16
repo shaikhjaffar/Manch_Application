@@ -1,16 +1,11 @@
 
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
-import Link from '@mui/material/Link'
-import Alert from '@mui/material/Alert'
 import Select from '@mui/material/Select'
 import { styled } from '@mui/material/styles'
 import MenuItem from '@mui/material/MenuItem'
-import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import InputLabel from '@mui/material/InputLabel'
-import AlertTitle from '@mui/material/AlertTitle'
-import IconButton from '@mui/material/IconButton'
 import CardContent from '@mui/material/CardContent'
 import FormControl from '@mui/material/FormControl'
 import Button from '@mui/material/Button'
@@ -19,7 +14,43 @@ import { useState,useEffect } from 'react'
 import getFileName from 'src/@core/utils/getFileName'
 import { OutlinedInput } from '@mui/material'
 import { base_url } from 'src/@core/utils/Constant'
+import { generatePdfByConfig } from 'src/@core/apiService/documentService'
+import toast from 'react-hot-toast'
+import { useRouter } from 'next/router'
 
+const downloadCsvFromBase64=(base64Csv, filename)=> {
+  if(!filename || filename === ""){
+    toast.error("Please Select templatename first",{position:'top-right'})
+
+    return
+
+  }
+
+
+// Decode the base64 string
+const csvContent = atob(base64Csv);
+
+// Create a Blob from the CSV content
+const blob = new Blob([csvContent], { type: 'text/csv' });
+
+// Create a link element
+const link = document.createElement('a');
+
+// Set the href attribute to a URL representing the Blob object
+link.href = URL.createObjectURL(blob);
+
+// Set the download attribute with the specified filename
+link.download = `${filename}_Sample`;
+
+// Append the link to the document body
+document.body.appendChild(link);
+
+// Programmatically click the link to trigger the download
+link.click();
+
+// Remove the link from the document
+document.body.removeChild(link);
+}
 
 const ImgStyled = styled('img')(({ theme }) => ({
   width: 120,
@@ -49,42 +80,40 @@ const ResetButtonStyled = styled(Button)(({ theme }) => ({
 
 const GeneratePdf = () => {
   const [request,setrequest] = useState ({
-    doctype:[{
-      id:'',
-      name:''
-    }],
     templateName:[{
       id:'',
       name:''
     }],
-    template_id:'',
+    template_name:'',
     html:'',
-    pdfPrefix:'',
-    startIndex:null,
-    smapleCsvUrl:''
+    batchName:'',
+    smapleCsvUrl:'',
   })
   const [documentData, setDocumentData] = useState(null);
+  const router = useRouter()
 
  const [file,setfile] = useState({
   filename:'',
   filePath:''
  })
 
+ 
+
  const handleTemplateChange = (e) =>{
   const html_String = documentData.documnet.filter((ele)=>{
-
+     
      if(ele.id === e.target.value ){
        return ele
      }
      
   })
-    console.log(html_String)
- setrequest({...request,'html': html_String[0].template_html,'template_id':e.target.value,'smapleCsvUrl':html_String[0].sample_csv_url});
+   console.log(html_String)
+ setrequest({...request,'html': html_String[0].template_html,'template_name':html_String[0].template_name,'smapleCsvUrl':html_String[0].sample_csv_url});
 };
 
   const handleChangeFile = (e) =>{
      setfile({...file,filename:getFileName(e.target.value)})
-    
+     setrequest({...request,'csvfile':e.target.files[0]})
   }
 
   const extractDocumentDetails = (responseData) => {
@@ -119,7 +148,21 @@ const GeneratePdf = () => {
   };
 
   const generatePdf =()=>{
-    console.log(request)
+       if(!request.batchName || !request.template_name || !request.csvfile ){
+        toast.error("Batch Name,Template Name and Csv file required",{position:'top-right'})
+        
+           return
+       } 
+       generatePdfByConfig(request)
+       router.push('/download-pdf')
+       .then((data)=>{
+          if(data.status == 200){
+            toast.success("PDF Generated Successfully!",{position:'top-right'})
+          }
+       })
+       .catch((err)=>{
+        toast.error("PDF Generation Failed!",{position:'top-right'})
+       })
   }
 
 
@@ -197,48 +240,30 @@ const GeneratePdf = () => {
   </Grid>
   <Grid item xs={4}>
   <FormControl fullWidth>
-  <InputLabel id="demo-simple-select-label">Enter Pdf file Prefix</InputLabel>
+  <InputLabel id="demo-simple-select-label">Enter Batch Name</InputLabel>
   <OutlinedInput
                 label='Enter Pdf file Prefix'
 
-                value={request.pdfPrefix}
+                value={request.batchName}
 
                 id='auth-login-identifier'
 
-                onChange={(e)=>{setrequest({...request,'pdfPrefix':e.target.value})}}
+                onChange={(e)=>{setrequest({...request,'batchName':e.target.value})}}
 
                 type='text'/>
 </FormControl>
 
   </Grid>
   <Grid item xs={4}>
-  <FormControl fullWidth>
-  <InputLabel id="demo-simple-select-label">Starting Index</InputLabel>
-  <OutlinedInput
-                label='Enter Pdf file Prefix'
-
-                value={request.startIndex}
-
-                id='auth-login-identifier'
-
-                onChange={(e)=>{setrequest({...request,'startIndex':e.target.value})}}
-
-                type='tel'/>
-</FormControl>
-
+  <Button variant='outlined' onClick={()=>{downloadCsvFromBase64(request.smapleCsvUrl,request.template_name)}}>
+    Download Sample Csv
+  </Button>
   </Grid>
   </Grid>
 
   <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
 
-  <Grid item xs={4} sx={{ marginTop: 4.8, marginBottom: 3 }}>
-  <Button variant='outlined'>
-    <a href={request.smapleCsvUrl} download>
-    Download Sample Csv
-    </a>
  
-  </Button>
-  </Grid>
   <Grid item xs={4} sx={{ marginTop: 4.8, marginBottom: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Box>
