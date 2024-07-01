@@ -17,6 +17,8 @@ import { base_url } from 'src/@core/utils/Constant'
 import { generatePdfByConfig } from 'src/@core/apiService/documentService'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/router'
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const downloadCsvFromBase64=(base64Csv, filename)=> {
   if(!filename || filename === ""){
@@ -89,6 +91,7 @@ const GeneratePdf = () => {
     batchName:'',
     smapleCsvUrl:'',
   })
+   const [loading,setLoading] = useState(false)
   const [documentData, setDocumentData] = useState(null);
   const router = useRouter()
 
@@ -153,11 +156,14 @@ const GeneratePdf = () => {
         
            return
        } 
+       setLoading(true)
        generatePdfByConfig(request)
-       router.push('/download-pdf')
+       
        .then((data)=>{
           if(data.status == 200){
             toast.success("PDF Generated Successfully!",{position:'top-right'})
+            setLoading(false)
+            router.push('/download-pdf')
           }
        })
        .catch((err)=>{
@@ -212,6 +218,12 @@ const GeneratePdf = () => {
 
   return (
     <Card sx={{padding:'1em',width:'max-content'}}>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
        <CardContent>
        <form>
        <Grid container rowSpacing={3} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
